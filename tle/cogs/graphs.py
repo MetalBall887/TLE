@@ -116,7 +116,7 @@ def take_extreme(user, contest, submissions, problems):
     for problem in problems_on_contest:
         min_rating = min(min_rating, problem[1])
 
-    return min_rating, max_rating + 20
+    return min_rating, max_rating
 
 def _running_mean(x, bin_size):
     n = len(x)
@@ -136,6 +136,8 @@ def _plot_extreme(rating_changes, user, statuses, problems, bin_size=3, mark='o'
 
     for rating_change, status, problemset in zip(rating_changes, statuses, problems):
         contest = cf_common.cache2.contest_cache.get_contest(rating_change.contestId)
+        if not problemset[0].rating:
+            continue
         t_min, t_max = take_extreme(user[0], contest, status, problemset)
 
         plot_min.append(t_min)
@@ -277,7 +279,7 @@ class Graphs(commands.Cog):
         contests = [cf_common.cache2.contest_cache.get_contest(change.contestId) for change in resp]
         user_status = await cf.user.status(handle=handles[0])
         statuses = [[submission for submission in user_status if submission.contestId == c.id] for c in contests]
-        problems = [problems for _, problems, _ in [await cf.contest.standings(contest_id=c.id, from_=1, count=1) for c in contests]]
+        problems = [problem for problem in [cf_common.cache2.contest_cache.get_standings(contest_id=c.id) for c in contests]]
 
         if not resp:
             raise GraphCogError('This user is not rated.')  
